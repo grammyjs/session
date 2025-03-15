@@ -1,0 +1,30 @@
+{
+    "name": "@grammyjs/sessions",
+    "version": "0.0.1",
+    "exports": "./mod.ts",
+    "lock": false,
+    "tasks": {
+        "check": "deno cache --allow-import src/mod.ts",
+        "test": "deno test --allow-import test",
+        "ok": "deno fmt && deno lint && deno task test && deno task check",
+        "clean": "git clean -fX out test/cov_profile test/coverage coverage.lcov",
+        "coverage": "deno task clean && deno task test --coverage=./test/cov_profile && deno coverage --lcov --output=./coverage.lcov ./test/cov_profile",
+        "report": "genhtml ./coverage.lcov --output-directory ./test/coverage/ && echo 'Point your browser to test/coverage/index.html to see the test coverage report.'"
+    },
+    "exclude": [
+        "./out/",
+        "./test/cov_profile",
+        ".*/"
+    ],
+    "fmt": {
+        "indentWidth": 4,
+        "proseWrap": "preserve"
+    },
+    "imports": {
+        "@grammyjs/debug": "jsr:@grammyjs/debug@^0.1.2",
+        "@std/assert": "jsr:@std/assert@^1.0.11",
+        "@std/testing": "jsr:@std/testing@^1.0.9",
+        // TODO: replace this with jsr when grammY is published there
+        "grammy": "https://raw.githubusercontent.com/grammyjs/grammY/refs/heads/v2/src/mod.ts"
+    }
+}

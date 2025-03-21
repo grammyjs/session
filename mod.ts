@@ -31,6 +31,11 @@ export interface SessionFlavor<S> {
      */
     get session(): S;
     set session(session: S | undefined);
+    /**
+     * Used by the session plugin to store the current session key, if it
+     * exists.
+     */
+    sessionKey: string | undefined;
 }
 /**
  * A lazy session flavor is a context flavor that holds a promise of some
@@ -166,6 +171,15 @@ type MultiSessionOptionsRecord<
     [K in keyof S]: SessionOptions<S[K], C>;
 };
 
+function setSessionKey(ctx: Context, key?: string) {
+    Object.defineProperty(ctx, "sessionKey", {
+        value: key,
+        writable: false,
+        configurable: false,
+        enumerable: true,
+    });
+}
+
 /**
  * Session middleware provides a persistent data storage for your bot. You can
  * use it to let your bot remember any data you want, for example the messages
@@ -233,6 +247,7 @@ function strictSingleSession<S, C extends Context>(
             initial,
         );
         const key = await getSessionKey(ctx);
+        setSessionKey(ctx, key);
         await propSession.init(key, { custom, lazy: false });
         await next(); // no catch: do not write back if middleware throws
         await propSession.finish();
@@ -257,6 +272,7 @@ function strictMultiSession<S, C extends Context>(
                 initial,
             );
             const key = await getSessionKey(ctx);
+            setSessionKey(ctx, key);
             await s.init(key, { custom, lazy: false });
             return s;
         }));
@@ -314,6 +330,7 @@ export function lazySession<S, C extends Context>(
             initial,
         );
         const key = await getSessionKey(ctx);
+        setSessionKey(ctx, key);
         await propSession.init(key, { custom, lazy: true });
         await next(); // no catch: do not write back if middleware throws
         await propSession.finish();

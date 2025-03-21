@@ -249,7 +249,7 @@ function strictSingleSession<S, C extends Context>(
         const key = await getSessionKey(ctx);
         setSessionKey(ctx, key);
         await propSession.init(key, { custom, lazy: false });
-        await next(); // no catch: do not write back if middleware throws
+        await next(); // no catch: do not write back if middleware
         await propSession.finish();
     };
 }
@@ -276,7 +276,7 @@ function strictMultiSession<S, C extends Context>(
             await s.init(key, { custom, lazy: false });
             return s;
         }));
-        await next(); // no catch: do not write back if middleware throws
+        await next(); // no catch: do not write back if middleware
         if (ctx.session === undefined) propSessions.forEach((s) => s.delete());
         await Promise.all(propSessions.map((s) => s.finish()));
     };
@@ -396,8 +396,7 @@ class PropertySession<O extends {}, P extends keyof O> {
             enumerable: true,
             get: () => {
                 if (key === undefined) {
-                    const msg = undef("access", opts);
-                    throw new Error(msg);
+                    return undefined;
                 }
                 this.read = true;
                 if (!opts.lazy || this.wrote) return this.value;
@@ -406,7 +405,7 @@ class PropertySession<O extends {}, P extends keyof O> {
             },
             set: (v) => {
                 if (key === undefined) {
-                    const msg = undef("assign", opts);
+                    const msg = undef("access", opts);
                     throw new Error(msg);
                 }
                 this.wrote = true;

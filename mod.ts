@@ -15,7 +15,7 @@ type MaybePromise<T> = Promise<T> | T;
  * middleware to know more, and read the section about sessions on the
  * [website](https://grammy.dev/plugins/session).
  */
-export interface SessionFlavor<S> {
+export type SessionFlavor<S, C extends Context = Context> = C & {
     /**
      * Session data on the context object.
      *
@@ -36,7 +36,8 @@ export interface SessionFlavor<S> {
      * exists.
      */
     sessionKey: string | undefined;
-}
+};
+
 /**
  * A lazy session flavor is a context flavor that holds a promise of some
  * session data under `ctx.session`.
@@ -49,7 +50,7 @@ export interface SessionFlavor<S> {
  * middleware to know more, and read the section about lazy sessions on the
  * [website](https://grammy.dev/plugins/session#lazy-sessions).
  */
-export interface LazySessionFlavor<S> {
+export type LazySessionFlavor<S, C extends Context = Context> = C & {
     /**
      * Session data on the context object, potentially a promise.
      *
@@ -65,7 +66,7 @@ export interface LazySessionFlavor<S> {
      */
     get session(): MaybePromise<S>;
     set session(session: MaybePromise<S | undefined>);
-}
+};
 
 /**
  * A storage adapter is an abstraction that provides read, write, and delete

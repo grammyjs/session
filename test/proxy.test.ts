@@ -2,7 +2,7 @@ import { assertEquals } from "jsr:@std/assert";
 import { describe, it } from "jsr:@std/testing/bdd";
 import { _MUTATED, _TRACKED, isTracked, trackMutations } from "../proxy.ts";
 
-describe("trackChanges", () => {
+describe("trackMutations", () => {
     it("correctly sets the tracked symbol", () => {
         const trackedState = trackMutations({});
 

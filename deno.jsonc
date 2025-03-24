@@ -5,7 +5,7 @@
     "lock": false,
     "tasks": {
         "check": "deno cache --allow-import src/mod.ts",
-        "test": "deno test --allow-import test",
+        "test": "deno test --allow-import --fail-fast test",
         "ok": "deno fmt && deno lint && deno task test && deno task check",
         "clean": "git clean -fX out test/cov_profile test/coverage coverage.lcov",
         "coverage": "deno task clean && deno task test --coverage=./test/cov_profile && deno coverage --lcov --output=./coverage.lcov ./test/cov_profile",

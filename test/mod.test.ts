@@ -15,7 +15,9 @@ import {
     MemorySessionStorage,
     session,
     type SessionFlavor,
+    type StorageAdapter,
 } from "../mod.ts";
+import { isTracked } from "../proxy.ts";
 
 const TICK_MS = 50;
 const tick = (n = 1) => new Promise((r) => setTimeout(r, n * TICK_MS));
@@ -86,6 +88,107 @@ describe("session", () => {
         assertEquals(storage.read.calls[0].args, ["42"]);
         assertEquals(storage.write.calls.length, 0);
         assertEquals(storage.delete.calls.length, 0);
+    });
+
+    it("should skip write when there are no changes if trackChanges is true", async () => {
+        type C = Context & SessionFlavor<{ count: number }>;
+        const storage = {
+            read: spy((_key: string) => ({ count: 0 })),
+            write: spy((_key: string, _value: { count: number }) => {}),
+            delete: spy((_key: string) => {}),
+        } satisfies StorageAdapter<{ count: number }>;
+
+        const composer = new Composer<C>();
+        const ctx = { chatId: 42 } as C;
+
+        composer.use(
+            session({
+                storage,
+                initial: () => ({ count: 0 }),
+                trackChanges: true,
+            }),
+        )
+            .use((ctx) => ctx.session.count);
+
+        await composer.middleware()(ctx, next);
+
+        assertEquals(storage.write.calls.length, 0);
+    });
+
+    it("should write when there are changes if trackChanges is true", async () => {
+        type C = Context & SessionFlavor<{ count: number }>;
+        const storage = {
+            read: spy((_key: string) => ({ count: 0 })),
+            write: spy((_key: string, _value: { count: number }) => {}),
+            delete: spy((_key: string) => {}),
+        } satisfies StorageAdapter<{ count: number }>;
+
+        const composer = new Composer<C>();
+        const ctx = { chatId: 42 } as C;
+
+        composer.use(
+            session({
+                storage,
+                initial: () => ({ count: 0 }),
+                trackChanges: true,
+            }),
+        )
+            .use((ctx) => ctx.session.count++);
+
+        await composer.middleware()(ctx, next);
+
+        assertEquals(storage.write.calls.length, 1);
+        assertEquals(storage.write.calls[0].args, ["42", { count: 1 }]);
+    });
+
+    it("should not proxify the value when trackChanges is false", async () => {
+        type C = Context & SessionFlavor<{ count: number }>;
+        const storage = {
+            read: spy((_key: string) => ({ count: 0 })),
+            write: spy((_key: string, _value: { count: number }) => {}),
+            delete: spy((_key: string) => {}),
+        } satisfies StorageAdapter<{ count: number }>;
+
+        const composer = new Composer<C>();
+        const ctx = { chatId: 42 } as C;
+
+        composer.use(
+            session({
+                storage,
+                initial: () => ({ count: 0 }),
+                trackChanges: false,
+            }),
+        )
+            .use((ctx) => {
+                assertEquals(isTracked(ctx.session), false);
+            });
+
+        await composer.middleware()(ctx, next);
+    });
+
+    it("should proxify the value when trackChanges is true", async () => {
+        type C = Context & SessionFlavor<{ count: number }>;
+        const storage = {
+            read: spy((_key: string) => ({ count: 0 })),
+            write: spy((_key: string, _value: { count: number }) => {}),
+            delete: spy((_key: string) => {}),
+        } satisfies StorageAdapter<{ count: number }>;
+
+        const composer = new Composer<C>();
+        const ctx = { chatId: 42 } as C;
+
+        composer.use(
+            session({
+                storage,
+                initial: () => ({ count: 0 }),
+                trackChanges: true,
+            }),
+        )
+            .use((ctx) => {
+                assertEquals(isTracked(ctx.session), true);
+            });
+
+        await composer.middleware()(ctx, next);
     });
 
     it("should do IO with primitives", async () => {

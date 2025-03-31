@@ -1,5 +1,6 @@
 import { createDebug } from "@grammyjs/debug";
 import type { Context, MiddlewareFn } from "grammy";
+import { hasMutations, isTracked, trackMutations } from "./proxy.ts";
 const debug = createDebug("grammy:session");
 
 type MaybePromise<T> = Promise<T> | T;
@@ -153,6 +154,11 @@ mentation of this.
      * lost whenever your bot restarts.
      */
     storage?: StorageAdapter<S>;
+    /**
+     * Track changes to the session object and only write to storage when
+     * changes are detected.
+     */
+    trackChanges?: boolean;
 }
 
 /**
@@ -238,13 +244,15 @@ export function session<S, C extends Context>(
 function strictSingleSession<S, C extends Context>(
     options: SessionOptions<S, C>,
 ): MiddlewareFn<C & SessionFlavor<S>> {
-    const { initial, storage, getSessionKey, custom } = fillDefaults(options);
+    const { initial, storage, getSessionKey, custom, trackChanges } =
+        fillDefaults(options);
     return async (ctx, next) => {
         const propSession = new PropertySession<SessionFlavor<S>, "session">(
             storage,
             ctx,
             "session",
             initial,
+            trackChanges,
         );
         const key = await getSessionKey(ctx);
         setSessionKey(ctx, key);
@@ -357,6 +365,7 @@ class PropertySession<O extends {}, P extends keyof O> {
         private obj: O,
         private prop: P,
         private initial: (() => O[P]) | undefined,
+        private trackChanges = false,
     ) {}
 
     /** Performs a read op and stores the result in `this.value` */
@@ -378,12 +387,17 @@ class PropertySession<O extends {}, P extends keyof O> {
                     // Check for write op in the meantime
                     if (!this.wrote) {
                         // Store received value in `this.value`
-                        this.value = val ?? this.initial?.();
+                        const value = val ?? this.initial?.();
+                        this.value = value ? this.trackIfNeeded(value) : value;
                     }
                     return this.value;
                 });
         }
         return this.promise;
+    }
+
+    private trackIfNeeded(value: O[P]) {
+        return this.trackChanges ? trackMutations(value) : value;
     }
 
     async init(
@@ -411,7 +425,7 @@ class PropertySession<O extends {}, P extends keyof O> {
                 }
                 this.wrote = true;
                 this.fetching = false;
-                this.value = v;
+                this.value = v ? this.trackIfNeeded(v) : v;
             },
         });
     }
@@ -425,6 +439,9 @@ class PropertySession<O extends {}, P extends keyof O> {
             if (this.read) await this.load();
             if (this.read || this.wrote) {
                 const value = await this.value;
+                if (isTracked(value) && !hasMutations(value)) {
+                    return;
+                }
                 if (value === undefined) await this.storage.delete(this.key);
                 else await this.storage.write(this.key, value);
             }
@@ -438,6 +455,7 @@ function fillDefaults<S, C extends Context>(opts: SessionOptions<S, C> = {}) {
         getSessionKey = defaultGetSessionKey,
         initial,
         storage,
+        trackChanges = false,
     } = opts;
     if (storage === undefined) {
         debug(
@@ -454,6 +472,7 @@ function fillDefaults<S, C extends Context>(opts: SessionOptions<S, C> = {}) {
             return key === undefined ? undefined : prefix + key;
         },
         custom,
+        trackChanges,
     };
 }
 

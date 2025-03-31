@@ -50,7 +50,7 @@ export type SessionFlavor<S, C extends Context = Context> = C & {
  * middleware to know more, and read the section about lazy sessions on the
  * [website](https://grammy.dev/plugins/session#lazy-sessions).
  */
-export type LazySessionFlavor<S, C extends Context = Context> = C & {
+export type LazySessionFlavor<C extends Context, S> = C & {
     /**
      * Session data on the context object, potentially a promise.
      *

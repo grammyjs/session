@@ -15,7 +15,7 @@ type MaybePromise<T> = Promise<T> | T;
  * middleware to know more, and read the section about sessions on the
  * [website](https://grammy.dev/plugins/session).
  */
-export type SessionFlavor<S, C extends Context = Context> = C & {
+export type SessionFlavor<C extends Context, S> = C & {
     /**
      * Session data on the context object.
      *

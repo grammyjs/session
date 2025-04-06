@@ -49,6 +49,12 @@ export function trackMutations<T>(
             if (prop === _TRACKED) return true;
             if (prop === _MUTATED) return hasChanges;
             const originalValue = Reflect.get(target, prop);
+
+            if (hasChanges) {
+                // Skip proxification if there are changes already
+                return originalValue;
+            }
+
             if (typeof originalValue === "object" && originalValue !== null) {
                 if (proxyCache.has(originalValue)) {
                     return proxyCache.get(originalValue);
@@ -57,6 +63,7 @@ export function trackMutations<T>(
                 proxyCache.set(originalValue, proxied);
                 return proxied;
             }
+
             if (typeof originalValue === "function") {
                 return (...args: unknown[]) => {
                     if (MUTATION_METHODS.has(String(prop))) {
@@ -65,6 +72,7 @@ export function trackMutations<T>(
                     return Reflect.apply(originalValue, target, args);
                 };
             }
+
             return Reflect.get(target, prop);
         },
         set(target, prop: string, value) {

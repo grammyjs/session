@@ -230,7 +230,7 @@ function setSessionKey(ctx: Context, key?: string) {
  */
 export function session<S, C extends Context>(
     options: SessionOptions<S, C> | MultiSessionOptions<S, C> = {},
-): MiddlewareFn<C & SessionFlavor<S>> {
+): MiddlewareFn<SessionFlavor<C, S>> {
     return options.type === "multi"
         ? strictMultiSession(options)
         : strictSingleSession(options);
@@ -238,10 +238,10 @@ export function session<S, C extends Context>(
 
 function strictSingleSession<S, C extends Context>(
     options: SessionOptions<S, C>,
-): MiddlewareFn<C & SessionFlavor<S>> {
+): MiddlewareFn<SessionFlavor<C, S>> {
     const { initial, storage, getSessionKey, custom } = fillDefaults(options);
     return async (ctx, next) => {
-        const propSession = new PropertySession<SessionFlavor<S>, "session">(
+        const propSession = new PropertySession<SessionFlavor<C, S>, "session">(
             storage,
             ctx,
             "session",
@@ -256,7 +256,7 @@ function strictSingleSession<S, C extends Context>(
 }
 function strictMultiSession<S, C extends Context>(
     options: MultiSessionOptions<S, C>,
-): MiddlewareFn<C & SessionFlavor<S>> {
+): MiddlewareFn<SessionFlavor<C, S>> {
     const props = Object.keys(options).filter((k) => k !== "type");
     const defaults = Object.fromEntries(
         props.map((prop) => [prop, fillDefaults(options[prop])]),
@@ -317,7 +317,7 @@ function strictMultiSession<S, C extends Context>(
  */
 export function lazySession<S, C extends Context>(
     options: SessionOptions<S, C> = {},
-): MiddlewareFn<C & LazySessionFlavor<S>> {
+): MiddlewareFn<LazySessionFlavor<C, S>> {
     if (options.type !== undefined && options.type !== "single") {
         throw new Error("Cannot use lazy multi sessions!");
     }

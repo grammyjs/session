@@ -15,7 +15,7 @@ type MaybePromise<T> = Promise<T> | T;
  * middleware to know more, and read the section about sessions on the
  * [website](https://grammy.dev/plugins/session).
  */
-export interface SessionFlavor<S> {
+export type SessionFlavor<C extends Context, S> = C & {
     /**
      * Session data on the context object.
      *
@@ -36,7 +36,8 @@ export interface SessionFlavor<S> {
      * exists.
      */
     sessionKey: string | undefined;
-}
+};
+
 /**
  * A lazy session flavor is a context flavor that holds a promise of some
  * session data under `ctx.session`.
@@ -49,7 +50,7 @@ export interface SessionFlavor<S> {
  * middleware to know more, and read the section about lazy sessions on the
  * [website](https://grammy.dev/plugins/session#lazy-sessions).
  */
-export interface LazySessionFlavor<S> {
+export type LazySessionFlavor<C extends Context, S> = C & {
     /**
      * Session data on the context object, potentially a promise.
      *
@@ -65,7 +66,7 @@ export interface LazySessionFlavor<S> {
      */
     get session(): MaybePromise<S>;
     set session(session: MaybePromise<S | undefined>);
-}
+};
 
 /**
  * A storage adapter is an abstraction that provides read, write, and delete
@@ -229,7 +230,7 @@ function setSessionKey(ctx: Context, key?: string) {
  */
 export function session<S, C extends Context>(
     options: SessionOptions<S, C> | MultiSessionOptions<S, C> = {},
-): MiddlewareFn<C & SessionFlavor<S>> {
+): MiddlewareFn<SessionFlavor<C, S>> {
     return options.type === "multi"
         ? strictMultiSession(options)
         : strictSingleSession(options);
@@ -237,10 +238,10 @@ export function session<S, C extends Context>(
 
 function strictSingleSession<S, C extends Context>(
     options: SessionOptions<S, C>,
-): MiddlewareFn<C & SessionFlavor<S>> {
+): MiddlewareFn<SessionFlavor<C, S>> {
     const { initial, storage, getSessionKey, custom } = fillDefaults(options);
     return async (ctx, next) => {
-        const propSession = new PropertySession<SessionFlavor<S>, "session">(
+        const propSession = new PropertySession<SessionFlavor<C, S>, "session">(
             storage,
             ctx,
             "session",
@@ -255,7 +256,7 @@ function strictSingleSession<S, C extends Context>(
 }
 function strictMultiSession<S, C extends Context>(
     options: MultiSessionOptions<S, C>,
-): MiddlewareFn<C & SessionFlavor<S>> {
+): MiddlewareFn<SessionFlavor<C, S>> {
     const props = Object.keys(options).filter((k) => k !== "type");
     const defaults = Object.fromEntries(
         props.map((prop) => [prop, fillDefaults(options[prop])]),
@@ -316,7 +317,7 @@ function strictMultiSession<S, C extends Context>(
  */
 export function lazySession<S, C extends Context>(
     options: SessionOptions<S, C> = {},
-): MiddlewareFn<C & LazySessionFlavor<S>> {
+): MiddlewareFn<LazySessionFlavor<C, S>> {
     if (options.type !== undefined && options.type !== "single") {
         throw new Error("Cannot use lazy multi sessions!");
     }

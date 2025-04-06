@@ -24,7 +24,7 @@ describe("session", () => {
     const next = () => Promise.resolve();
 
     it("should pass through updates", async () => {
-        type C = Context & SessionFlavor<never>;
+        type C = SessionFlavor<Context, never>;
         const composer = new Composer<C>();
         const ctx = { chatId: 42 } as C;
         const middleware = spy((_ctx) => {});
@@ -34,7 +34,7 @@ describe("session", () => {
     });
 
     it("should throw when reading from empty session key", async () => {
-        type C = Context & SessionFlavor<number>;
+        type C = SessionFlavor<Context, number>;
         let composer = new Composer<C>();
         const ctx = {} as C;
         composer.use(session(), () => ctx.session);
@@ -53,7 +53,7 @@ describe("session", () => {
     });
 
     it("should throw when writing to empty session key", async () => {
-        type C = Context & SessionFlavor<number>;
+        type C = SessionFlavor<Context, number>;
         const composer = new Composer<C>();
         const ctx = {} as C;
         composer.use(
@@ -66,7 +66,7 @@ describe("session", () => {
     });
 
     it("should skip write upon error", async () => {
-        type C = Context & SessionFlavor<number>;
+        type C = SessionFlavor<Context, number>;
         const storage = {
             read: spy((_key: string) => 0),
             write: spy((_key: string, _value: number) => {}),
@@ -99,7 +99,7 @@ describe("session", () => {
                 val = undefined;
             }),
         };
-        type C = Context & SessionFlavor<number>;
+        type C = SessionFlavor<Context, number>;
         const composer = new Composer<C>();
         let ctx = { chatId: 42 } as C;
         composer.use(session({ storage }))
@@ -136,7 +136,7 @@ describe("session", () => {
                 val = undefined;
             }),
         };
-        type C = Context & SessionFlavor<number>;
+        type C = SessionFlavor<Context, number>;
         const composer = new Composer<C>();
         let ctx = { chatId: 42 } as C;
         composer.use(
@@ -181,7 +181,7 @@ describe("session", () => {
             }),
         };
         const initial = spy(() => ({}));
-        type C = Context & SessionFlavor<Record<string, number>>;
+        type C = SessionFlavor<Context, Record<string, number>>;
         const composer = new Composer<C>();
         let ctx = { chatId: 42 } as C;
         composer
@@ -262,7 +262,7 @@ describe("session", () => {
         };
 
         const initial = () => ({});
-        type C = Context & SessionFlavor<never>;
+        type C = SessionFlavor<Context, never>;
         const composer = new Composer<C>();
         const ctx = { chatId: 42 } as C;
         composer.use(session({ storage, initial }));
@@ -276,7 +276,7 @@ describe("multi session", () => {
     const next = () => Promise.resolve();
 
     it("should pass through updates", async () => {
-        type C = Context & SessionFlavor<Record<never, never>>;
+        type C = SessionFlavor<Context, Record<never, never>>;
         const composer = new Composer<C>();
         const ctx = { chatId: 42 } as C;
         const middleware = spy((_ctx) => {});
@@ -286,7 +286,7 @@ describe("multi session", () => {
     });
 
     it("should throw when reading from empty session key", async () => {
-        type C = Context & SessionFlavor<{ prop: number }>;
+        type C = SessionFlavor<Context, { prop: number }>;
         let composer = new Composer<C>();
         const ctx = {} as C;
         composer.use(
@@ -311,7 +311,7 @@ describe("multi session", () => {
     });
 
     it("should throw when writing to empty session key", async () => {
-        type C = Context & SessionFlavor<{ prop: number }>;
+        type C = SessionFlavor<Context, { prop: number }>;
         const composer = new Composer<C>();
         const ctx = {} as C;
         composer.use(
@@ -327,7 +327,7 @@ describe("multi session", () => {
     });
 
     it("should skip write upon error", async () => {
-        type C = Context & SessionFlavor<{ prop: number }>;
+        type C = SessionFlavor<Context, { prop: number }>;
         const storage = {
             read: spy((_key: string) => 0),
             write: spy((_key: string, _value: number) => {}),
@@ -376,7 +376,7 @@ describe("multi session", () => {
             prop0: Record<string, number>;
             prop1: Record<string, number>;
         }
-        type C = Context & SessionFlavor<SessionData>;
+        type C = SessionFlavor<Context, SessionData>;
         const composer = new Composer<C>();
         let ctx = { chatId: 42 } as C;
         composer
@@ -502,7 +502,7 @@ describe("multi session", () => {
             prop0: Record<string, number>;
             prop1: Record<string, number>;
         };
-        type C = Context & SessionFlavor<SessionData>;
+        type C = SessionFlavor<Context, SessionData>;
         const composer = new Composer<C>();
         const ctx = { chatId: 42 } as C;
         composer.use(
@@ -529,7 +529,7 @@ describe("lazy session", () => {
     });
 
     it("should pass through updates", async () => {
-        type C = Context & SessionFlavor<never>;
+        type C = SessionFlavor<Context, never>;
         const composer = new Composer<C>();
         const ctx = { chatId: 42 } as C;
         const middleware = spy((_ctx) => {});
@@ -539,7 +539,7 @@ describe("lazy session", () => {
     });
 
     it("should throw when reading from empty session key", async () => {
-        type C = Context & LazySessionFlavor<number>;
+        type C = LazySessionFlavor<Context, number>;
         let composer = new Composer<C>();
         const ctx = {} as C;
         composer.use(lazySession(), () => ctx.session);
@@ -558,7 +558,7 @@ describe("lazy session", () => {
     });
 
     it("should throw when writing to empty session key", async () => {
-        type C = Context & LazySessionFlavor<number>;
+        type C = LazySessionFlavor<Context, number>;
         const composer = new Composer<C>();
         const ctx = {} as C;
         composer.use(
@@ -571,7 +571,7 @@ describe("lazy session", () => {
     });
 
     it("should skip write upon error", async () => {
-        type C = Context & LazySessionFlavor<number>;
+        type C = LazySessionFlavor<Context, number>;
         const storage = {
             read: spy((_key: string) => 0),
             write: spy((_key: string, _value: number) => {}),
@@ -605,7 +605,7 @@ describe("lazy session", () => {
                 val = undefined;
             }),
         };
-        type C = Context & LazySessionFlavor<number>;
+        type C = LazySessionFlavor<Context, number>;
         const composer = new Composer<C>();
         let ctx = { chatId: 42 } as C;
         composer.use(lazySession({ storage }))
@@ -643,7 +643,7 @@ describe("lazy session", () => {
             }),
         };
         const initial = spy(() => ({}));
-        type C = Context & LazySessionFlavor<Record<string, number>>;
+        type C = LazySessionFlavor<Context, Record<string, number>>;
         const composer = new Composer<C>();
         let ctx = { chatId: 42 } as C;
         composer
@@ -728,7 +728,7 @@ describe("lazy session", () => {
             val = undefined;
         }),
     };
-    type C = Context & LazySessionFlavor<number>;
+    type C = LazySessionFlavor<Context, number>;
     let composer: Composer<C>;
     let ctx: C;
 
@@ -804,7 +804,7 @@ describe("lazy session", () => {
     });
 
     it("should set ctx.sessionKey", async () => {
-        type C = Context & SessionFlavor<never>;
+        type C = SessionFlavor<Context, never>;
         const composer = new Composer<C>();
         const ctx = { chatId: 42 } as C;
         composer.use(lazySession());

@@ -186,36 +186,11 @@ function setSessionKey(ctx: Context, key?: string) {
  */
 function deepCopy<T>(value: T): T {
     // Handle primitives and null/undefined
-    if (value === null || value === undefined) {
+    if (value === null || value === undefined || typeof value !== "object") {
         return value;
     }
 
-    if (typeof value !== "object") {
-        return value;
-    }
-
-    // Handle Date objects
-    if (value instanceof Date) {
-        return new Date(value.getTime()) as T;
-    }
-
-    // Handle Array objects
-    if (Array.isArray(value)) {
-        return value.map((item) => deepCopy(item)) as T;
-    }
-
-    // Handle plain objects
-    const copy = {} as T;
-
-    for (const key in value) {
-        if (Object.prototype.hasOwnProperty.call(value, key)) {
-            (copy as Record<string, unknown>)[key] = deepCopy(
-                (value as Record<string, unknown>)[key],
-            );
-        }
-    }
-
-    return copy;
+    return structuredClone(value);
 }
 
 /**

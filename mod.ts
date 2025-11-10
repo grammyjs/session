@@ -181,6 +181,44 @@ function setSessionKey(ctx: Context, key?: string) {
 }
 
 /**
+ * Deep copies a value to prevent shared references between sessions.
+ * Handles primitives, objects, arrays, dates, and other common types.
+ */
+function deepCopy<T>(value: T): T {
+    // Handle primitives and null/undefined
+    if (value === null || value === undefined) {
+        return value;
+    }
+
+    if (typeof value !== "object") {
+        return value;
+    }
+
+    // Handle Date objects
+    if (value instanceof Date) {
+        return new Date(value.getTime()) as T;
+    }
+
+    // Handle Array objects
+    if (Array.isArray(value)) {
+        return value.map((item) => deepCopy(item)) as T;
+    }
+
+    // Handle plain objects
+    const copy = {} as T;
+
+    for (const key in value) {
+        if (Object.prototype.hasOwnProperty.call(value, key)) {
+            (copy as Record<string, unknown>)[key] = deepCopy(
+                (value as Record<string, unknown>)[key],
+            );
+        }
+    }
+
+    return copy;
+}
+
+/**
  * Session middleware provides a persistent data storage for your bot. You can
  * use it to let your bot remember any data you want, for example the messages
  * it sent or received in the past. This is done by attaching _session data_ to
@@ -378,7 +416,9 @@ class PropertySession<O extends {}, P extends keyof O> {
                     // Check for write op in the meantime
                     if (!this.wrote) {
                         // Store received value in `this.value`
-                        this.value = val ?? this.initial?.();
+                        this.value = val !== undefined
+                            ? deepCopy(val)
+                            : this.initial?.();
                     }
                     return this.value;
                 });
@@ -426,7 +466,7 @@ class PropertySession<O extends {}, P extends keyof O> {
             if (this.read || this.wrote) {
                 const value = await this.value;
                 if (value === undefined) await this.storage.delete(this.key);
-                else await this.storage.write(this.key, value);
+                else await this.storage.write(this.key, deepCopy(value));
             }
         }
     }
@@ -635,8 +675,11 @@ function wrapStorage<T>(
     storage: StorageAdapter<Enhance<T>>,
 ): StorageAdapter<T> {
     return {
-        read: (k) => Promise.resolve(storage.read(k)).then((v) => v?.__d),
-        write: (k, v) => storage.write(k, { __d: v }),
+        read: (k) =>
+            Promise.resolve(storage.read(k)).then((v) =>
+                v?.__d ? deepCopy(v.__d) : undefined
+            ),
+        write: (k, v) => storage.write(k, { __d: deepCopy(v) }),
         delete: (k) => storage.delete(k),
     };
 }
@@ -682,7 +725,7 @@ export class MemorySessionStorage<S> implements StorageAdapter<S> {
             this.delete(key);
             return undefined;
         }
-        return value.session;
+        return deepCopy(value.session);
     }
 
     readAllKeys(): string[] {
@@ -707,7 +750,7 @@ export class MemorySessionStorage<S> implements StorageAdapter<S> {
     }
 
     write(key: string, value: S) {
-        this.storage.set(key, addExpiryDate(value, this.timeToLive));
+        this.storage.set(key, addExpiryDate(deepCopy(value), this.timeToLive));
     }
 
     delete(key: string) {

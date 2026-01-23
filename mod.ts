@@ -378,9 +378,7 @@ class PropertySession<O extends {}, P extends keyof O> {
                     // Check for write op in the meantime
                     if (!this.wrote) {
                         // Store received value in `this.value`
-                        this.value = val !== undefined
-                            ? structuredClone(val)
-                            : this.initial?.();
+                        this.value = val ?? this.initial?.();
                     }
                     return this.value;
                 });
@@ -428,7 +426,7 @@ class PropertySession<O extends {}, P extends keyof O> {
             if (this.read || this.wrote) {
                 const value = await this.value;
                 if (value === undefined) await this.storage.delete(this.key);
-                else await this.storage.write(this.key, structuredClone(value));
+                else await this.storage.write(this.key, value);
             }
         }
     }
@@ -637,11 +635,8 @@ function wrapStorage<T>(
     storage: StorageAdapter<Enhance<T>>,
 ): StorageAdapter<T> {
     return {
-        read: (k) =>
-            Promise.resolve(storage.read(k)).then((v) =>
-                v?.__d ? structuredClone(v.__d) : undefined
-            ),
-        write: (k, v) => storage.write(k, { __d: structuredClone(v) }),
+        read: (k) => Promise.resolve(storage.read(k)).then((v) => v?.__d),
+        write: (k, v) => storage.write(k, { __d: v }),
         delete: (k) => storage.delete(k),
     };
 }
@@ -712,7 +707,10 @@ export class MemorySessionStorage<S> implements StorageAdapter<S> {
     }
 
     write(key: string, value: S) {
-        this.storage.set(key, addExpiryDate(structuredClone(value), this.timeToLive));
+        this.storage.set(
+            key,
+            addExpiryDate(structuredClone(value), this.timeToLive),
+        );
     }
 
     delete(key: string) {

@@ -4,7 +4,7 @@
     "exports": "./mod.ts",
     "lock": false,
     "tasks": {
-        "check": "deno cache --allow-import src/mod.ts",
+        "check": "deno cache --allow-import mod.ts",
         "test": "deno test --allow-import test",
         "ok": "deno fmt && deno lint && deno task test && deno task check",
         "clean": "git clean -fX out test/cov_profile test/coverage coverage.lcov",
@@ -22,9 +22,9 @@
         "proseWrap": "preserve"
     },
     "imports": {
-        "@grammyjs/debug": "jsr:@grammyjs/debug@^0.1.2",
-        "@std/assert": "jsr:@std/assert@^1.0.11",
-        "@std/testing": "jsr:@std/testing@^1.0.9",
+        "@grammyjs/debug": "jsr:@grammyjs/debug@0.1.2",
+        "@std/assert": "jsr:@std/assert@^1.0.17",
+        "@std/testing": "jsr:@std/testing@^1.0.17",
         // TODO: replace this with jsr when grammY is published there
         "grammy": "https://raw.githubusercontent.com/grammyjs/grammY/refs/heads/v2/src/mod.ts"
     }

@@ -1,12 +1,7 @@
 import { Composer, type Context, type MiddlewareFn } from "grammy";
-import {
-    assert,
-    assertEquals,
-    assertRejects,
-    assertThrows,
-} from "jsr:@std/assert";
-import { describe, it } from "jsr:@std/testing/bdd";
-import { spy } from "jsr:@std/testing/mock";
+import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
+import { describe, it } from "@std/testing/bdd";
+import { spy } from "@std/testing/mock";
 import {
     type Enhance,
     enhanceStorage,

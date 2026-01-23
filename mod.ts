@@ -682,7 +682,7 @@ export class MemorySessionStorage<S> implements StorageAdapter<S> {
             this.delete(key);
             return undefined;
         }
-        return value.session;
+        return structuredClone(value.session);
     }
 
     readAllKeys(): string[] {
@@ -707,7 +707,10 @@ export class MemorySessionStorage<S> implements StorageAdapter<S> {
     }
 
     write(key: string, value: S) {
-        this.storage.set(key, addExpiryDate(value, this.timeToLive));
+        this.storage.set(
+            key,
+            addExpiryDate(structuredClone(value), this.timeToLive),
+        );
     }
 
     delete(key: string) {

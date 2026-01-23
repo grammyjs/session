@@ -4,7 +4,7 @@
     "exports": "./mod.ts",
     "lock": false,
     "tasks": {
-        "check": "deno cache --allow-import src/mod.ts",
+        "check": "deno cache --allow-import mod.ts",
         "test": "deno test --allow-import test",
         "ok": "deno fmt && deno lint && deno task test && deno task check",
         "clean": "git clean -fX out test/cov_profile test/coverage coverage.lcov",

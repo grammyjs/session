@@ -181,19 +181,6 @@ function setSessionKey(ctx: Context, key?: string) {
 }
 
 /**
- * Deep copies a value to prevent shared references between sessions.
- * Handles primitives, objects, arrays, dates, and other common types.
- */
-function deepCopy<T>(value: T): T {
-    // Handle primitives and null/undefined
-    if (value === null || value === undefined || typeof value !== "object") {
-        return value;
-    }
-
-    return structuredClone(value);
-}
-
-/**
  * Session middleware provides a persistent data storage for your bot. You can
  * use it to let your bot remember any data you want, for example the messages
  * it sent or received in the past. This is done by attaching _session data_ to
@@ -392,7 +379,7 @@ class PropertySession<O extends {}, P extends keyof O> {
                     if (!this.wrote) {
                         // Store received value in `this.value`
                         this.value = val !== undefined
-                            ? deepCopy(val)
+                            ? structuredClone(val)
                             : this.initial?.();
                     }
                     return this.value;
@@ -441,7 +428,7 @@ class PropertySession<O extends {}, P extends keyof O> {
             if (this.read || this.wrote) {
                 const value = await this.value;
                 if (value === undefined) await this.storage.delete(this.key);
-                else await this.storage.write(this.key, deepCopy(value));
+                else await this.storage.write(this.key, structuredClone(value));
             }
         }
     }
@@ -652,9 +639,9 @@ function wrapStorage<T>(
     return {
         read: (k) =>
             Promise.resolve(storage.read(k)).then((v) =>
-                v?.__d ? deepCopy(v.__d) : undefined
+                v?.__d ? structuredClone(v.__d) : undefined
             ),
-        write: (k, v) => storage.write(k, { __d: deepCopy(v) }),
+        write: (k, v) => storage.write(k, { __d: structuredClone(v) }),
         delete: (k) => storage.delete(k),
     };
 }
@@ -700,7 +687,7 @@ export class MemorySessionStorage<S> implements StorageAdapter<S> {
             this.delete(key);
             return undefined;
         }
-        return deepCopy(value.session);
+        return structuredClone(value.session);
     }
 
     readAllKeys(): string[] {
@@ -725,7 +712,7 @@ export class MemorySessionStorage<S> implements StorageAdapter<S> {
     }
 
     write(key: string, value: S) {
-        this.storage.set(key, addExpiryDate(deepCopy(value), this.timeToLive));
+        this.storage.set(key, addExpiryDate(structuredClone(value), this.timeToLive));
     }
 
     delete(key: string) {
